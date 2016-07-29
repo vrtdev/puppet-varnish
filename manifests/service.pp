@@ -18,21 +18,24 @@
 # }
 
 class varnish::service (
+<<<<<<< HEAD
   $start = 'yes',
   $systemctl_bin = $::varnish::systemctl_bin,
+=======
+  $start                  = 'yes',
+  $systemd                = $::varnish::params::systemd,
+  $systemd_conf_path      = $::varnish::params::systemd_conf_path,
+  $vcl_reload_script      = $::varnish::params::vcl_reload_script
+>>>>>>> origin/develop
 ) {
 
   # include install
-  include varnish::install
+  include ::varnish::install
 
   # set state
   $service_state = $start ? {
     'no'    => stopped,
     default => running,
-  }
-  $service_enable = $start ? {
-    'no'    => false,
-    default => true,
   }
 
   # varnish service
@@ -44,7 +47,6 @@ class varnish::service (
 
   service {'varnish':
     ensure  => $service_state,
-    enable  => $service_enable,
     restart => $reload_cmd,
     require => Package['varnish'],
   }
@@ -55,34 +57,45 @@ class varnish::service (
     default     => undef,
   }
 
-  $status_command = $::osfamily ? {
-    'debian'    => '/etc/init.d/varnish status',
-    'redhat'    => '/sbin/service varnish status',
-    default     => undef,
-  }
-
   exec {'restart-varnish':
     command     => $restart_command,
     refreshonly => true,
-    onlyif      => $status_command,
+    require     => Service['varnish'],
   }
 
+<<<<<<< HEAD
   if $varnish::systemd {
 
       file { '/etc/systemd/system/varnish.service':
         ensure => file,
         content => template('varnish/varnish-service.erb'),
         notify => Exec['Reload systemd'],
+=======
+  if $systemd {
+      file {  $systemd_conf_path :
+        ensure => file,
+        content => template('varnish/varnish.service.erb'),
+        notify => Exec['Reload systemd'],
+        before => [Service['varnish'], Exec['restart-varnish']],
+>>>>>>> origin/develop
         require => Package['varnish'],
       }
 
       if (!defined(Exec['Reload systemd'])) {
         exec {'Reload systemd':
+<<<<<<< HEAD
           command     => "${systemctl_bin} daemon-reload",
+=======
+          command     => 'systemctl daemon-reload',
+          path        => ['/bin','/sbin','/usr/bin','/usr/sbin'],
+>>>>>>> origin/develop
           refreshonly => true,
           notify      => Exec['restart-varnish'],
         }
       }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/develop
   }
 }

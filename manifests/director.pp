@@ -6,7 +6,11 @@ define varnish::director(
 
   validate_re($title,'^[A-Za-z0-9_]*$', "Invalid characters in director name ${title}. Only letters, numbers and underscore are allowed.")
 
+<<<<<<< HEAD
   if versioncmp($::varnish::varnish_version, '4') >= 0 {
+=======
+  if versioncmp($::varnish::real_version, '4') >= 0 {
+>>>>>>> origin/develop
     $template_director = 'varnish/includes/directors4.vcl.erb'
     $director_object = $type ? {
       'round-robin' => 'round_robin',
@@ -21,5 +25,6 @@ define varnish::director(
     target  => "${varnish::vcl::includedir}/directors.vcl",
     content => template($template_director),
     order   => '02',
+    notify  => Service['varnish'],
   }
 }

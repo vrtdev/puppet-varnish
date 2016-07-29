@@ -12,10 +12,12 @@
 # $varnish_listen_port -> VARNISH_LISTEN_PORT
 #
 # Exceptions are:
+# ensure        - passed to puppet type 'package', attribute 'ensure'
 # shmlog_dir    - location for shmlog
 # shmlog_tempfs - mounts shmlog directory as tmpfs
 #                 default value: true
-# version       - passed to puppet type 'package', attribute 'ensure'
+# version       - the Varnish version to be installed (valid values are '3.0',
+#                 '4.0' and '4.1')
 # add_repo      - if set to false (defaults to true), the yum/apt repo is not added
 #
 # === Default values
@@ -44,6 +46,7 @@
 #
 
 class varnish (
+  $ensure                       = 'present',
   $start                        = 'yes',
   $reload_vcl                   = true,
   $nfiles                       = '131072',
@@ -66,16 +69,22 @@ class varnish (
   $vcl_dir                      = undef,
   $shmlog_dir                   = '/var/lib/varnish',
   $shmlog_tempfs                = true,
-  $version                      = present,
+  $version                      = '3.0',
   $add_repo                     = true,
   $manage_firewall              = false,
   $varnish_conf_template        = 'varnish/varnish-conf.erb',
+  $varnish_identity             = undef,
   $additional_parameters        = {},
+<<<<<<< HEAD
   $conf_file_path               = $varnish::params::conf_file_path,
   $systemd                      = $varnish::params::systemd,
   $systemctl_bin                = $varnish::params::systemctl_bin,
   $varnish_reload_bin           = $varnish::params::varnish_reload_bin
 ) inherits varnish::params {
+=======
+  $additional_storages          = {},
+) {
+>>>>>>> origin/develop
 
   $conf_file = $systemd ? {
     true => '/etc/varnish/varnish.params',
@@ -85,6 +94,21 @@ class varnish (
   $varnish_version = $version ? {
     /4\..*/ => '4',
     default => $default_version,
+  }
+
+  if ! ($version =~ /^\d+\.\d+$/) {
+    warning('$version should consist only of major and minor version numbers.')
+
+    # Extract major and minor version from the value, otherwise default to 3.0.
+    if $version =~ /^\d+\.\d+\./ {
+      $real_version = regsubst($version, '^(\d+\.\d+).*$', '\1')
+    } elsif $version == 'present' {
+      $real_version = '3.0'
+    } else {
+      fail('Invalid value for $version.')
+    }
+  } else {
+    $real_version = $version
   }
 
   # install Varnish
